@@ -1,6 +1,6 @@
 
 import numpy as np
-import general.rf_models as rfm
+import rf_models as rfm
 import itertools as it
 import scipy.stats as sts
 
