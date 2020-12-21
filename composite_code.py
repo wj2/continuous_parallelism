@@ -35,6 +35,46 @@ class CombinedCode(object):
                  nonlin_components=10, first_rf_cent=-1, last_rf_cent=1,
                  input_distribution=None, rotation=True, inp_dim=2, rf_scale=1,
                  rf_baseline=0, noise_distrib=None, noise_variance=1):
+        """ 
+        A code with linear and nonlinear, receptive field components.
+
+        Parameters
+        ----------
+        n_neurs : int
+            The number of neurons to include in the combined representation
+            only applied if rotation is True
+        linear_pwr : float
+            The power given to the linear representation -- power is quantified
+            by pwr_quant and rescaling is done by pwr_rescale.
+        nonlinear_pwr : float
+            The power given to the nonlinear, RF representaton -- power is 
+            quantified in the same way as above.
+        rf_width : float or None, optional
+            The width of receptive fields -- default is None. If None, then 
+            receptive fields are given widths so that they contain roughly the
+            same input distribution probability mass as each other. If a value
+            is given, then they are equally spaced between the provided first 
+            and last RF centers and all have the given width. 
+        nonlin_components : int, optional
+            The number of components along each dimension of the nonlinear 
+            representation. The total number of nonlinear components is 
+            nonline_components**inp_dim. 
+        first_rf_cent : int, optional
+            The position in stimulus space of the first RF center if width is 
+            given.
+        last_rf_cent : int, optional
+            The position in stimulus space of the last RF center if width is 
+            given.
+        input_distribution : distribution object, optional
+            If not given, distribution is an isotropic Gaussian. If given, must 
+            be an iterable, and implement dim property and rvs method. 
+        rotation : bool, optional
+            If True, the representation will be random rotated, producing a 
+            linear mixture of the linear and nonlinear components.
+        inp_dim : int
+            If input_distribution is None, this is the dimensionality of the
+            isotropic Gaussian used as the input distribution. 
+        """
         if input_distribution is None:
             input_distribution = sts.multivariate_normal(np.zeros(inp_dim), 1)
             id_list = (sts.norm(0, 1),)*inp_dim
@@ -77,6 +117,27 @@ class CombinedCode(object):
         self.noise_distrib = noise_distrib
 
     def stim_resp(self, x, add_noise=True):
+        """
+        Get representation of stimuli x in the code. 
+
+        Parameters
+        ----------
+        x : ndarray
+            Array of stimuli with shape (n, inp_dim) where n is the number of 
+            stimuli. If shape of x has length 1, will be assumed to be a single
+            stimulus.
+        add_noise : bool, optional
+            Whether or not to add noise sampled from the noise distribution of
+            the model (default True). 
+
+        Returns
+        -------
+        resp : ndarray
+            Array of shape (n, n_neurs) -- the representations. 
+        """
+        x = np.array(x)
+        if len(x.shape) == 1:
+            x = np.expand_dims(x, 0)
         nl_resp = self.nonlin_func(x)
         l_resp = self.lin_func(x)
         resp_full = np.concatenate((nl_resp, l_resp), axis=1)
@@ -87,6 +148,24 @@ class CombinedCode(object):
         return resp_full
 
     def sample_representations(self, n, add_noise=True):
+        """
+        Sample n representations from the code. 
+
+        Parameters
+        ----------
+        n : int
+            The number of representations to sample.
+        add_noise : bool, optional
+            Whether or not to add noise sampled from the noise distribution of
+            the model (default True). 
+
+        Returns
+        -------
+        stim : ndarray
+            Array of shape (n, inp_dim) -- the sampled stimuli.
+        resp : ndarray
+            Array of shape (n, n_neurs) -- the representations. 
+        """
         stim = self.inp_distrib.rvs(n)
         resp = self.stim_resp(stim, add_noise=add_noise)
         return stim, resp
