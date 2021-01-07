@@ -82,6 +82,7 @@ class CombinedCode(object):
             id_list = input_distribution
         self.inp_distrib = input_distribution
         self.inp_dim = input_distribution.dim
+        self.id_list = id_list
         self.p_l = linear_pwr
         self.p_n = nonlinear_pwr
         if rf_width is None:
@@ -116,6 +117,15 @@ class CombinedCode(object):
                                                     noise_variance)
         self.noise_distrib = noise_distrib
 
+    def get_manifold(self, discretization_steps=100, eps=10**-5):
+        cumu_probs = np.linspace(eps, 1 - eps, discretization_steps)
+        dim_pos = np.zeros((self.inp_dim, discretization_steps))
+        for i, in_dim in enumerate(self.id_list):
+            dim_pos[i] = in_dim.ppf(cumu_probs)
+        x = np.array(list(it.product(*dim_pos)))
+        y = self.stim_resp(x, add_noise=False)
+        return x, y
+        
     def stim_resp(self, x, add_noise=True):
         """
         Get representation of stimuli x in the code. 

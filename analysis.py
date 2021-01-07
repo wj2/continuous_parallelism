@@ -89,3 +89,12 @@ def compute_tradeoff(code_class, total_pwr, n_neurs, train_pt, test_pt,
                                    samples_var, **kwargs)
         outs.append(out)
     return ln_tradeoff, np.array(outs)
+
+def compute_tradeoff_neighborhood(code_class, total_pwr, n_neurs, train_pt,
+                                  test_pt, neighborhood_range, **kwargs):
+    outs = []
+    for nr in neighborhood_range:
+        trades, out = compute_tradeoff(code_class, total_pwr, n_neurs, train_pt,
+                                       test_pt, nr, **kwargs)
+        outs.append(out)
+    return trades, np.array(outs)
