@@ -4,8 +4,19 @@ import scipy.stats as sts
 import sklearn.linear_model as sklm
 import sklearn.decomposition as skd
 
-import general.utility as u
 import continuous_parallelism.composite_code as cp
+
+def cosine_similarity(v1, v2):
+    v1 = np.array(v1)
+    v2 = np.array(v2)
+    if len(v1.shape) == 1:
+        v1 = np.expand_dims(v1, 0)
+    if len(v2.shape) == 1:
+        v2 = np.expand_dims(v2, 0)
+    v1_lens = np.sqrt(np.sum(v1**2, axis=1))
+    v2_lens = np.sqrt(np.sum(v2**2, axis=1))
+    s = np.sum(v1*v2, axis=1)/(v1_lens*v2_lens)
+    return s 
 
 def compute_code_metrics(code, metrics, train_pt, test_pt, distr_var,
                          n_pts=1000, with_noise=True,
@@ -52,7 +63,7 @@ def compute_cosine_parallelism(train_stim, train_reps, test_stim, test_reps,
     lr.fit(train_reps, train_stim)
     lr_test = sklm.Ridge(**lr_kwargs)
     lr_test.fit(test_reps, test_stim)
-    para = u.cosine_similarity(lr.coef_, lr_test.coef_)
+    para = cosine_similarity(lr.coef_, lr_test.coef_)
     return np.mean(para)
 
 def compute_ccgp(train_stim, train_reps, test_stim, test_reps,
