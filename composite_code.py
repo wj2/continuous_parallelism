@@ -1,6 +1,6 @@
 
 import numpy as np
-import rf_models as rfm
+import continuous_parallelism.rf_models as rfm
 import itertools as it
 import scipy.stats as sts
 
@@ -117,11 +117,19 @@ class CombinedCode(object):
                                                     noise_variance)
         self.noise_distrib = noise_distrib
 
-    def get_manifold(self, discretization_steps=100, eps=10**-5):
-        cumu_probs = np.linspace(eps, 1 - eps, discretization_steps)
+    def get_manifold(self, discretization_steps=100, eps=10**-5,
+                     prob_space=False, cent_ind=0):
         dim_pos = np.zeros((self.inp_dim, discretization_steps))
-        for i, in_dim in enumerate(self.id_list):
-            dim_pos[i] = in_dim.ppf(cumu_probs)
+        if prob_space:
+            cumu_probs = np.linspace(eps, 1 - eps, discretization_steps)
+            for i, in_dim in enumerate(self.id_list):
+                dim_pos[i] = in_dim.ppf(cumu_probs)
+        else:
+            for i in range(self.inp_dim):
+                cents_u = np.unique(self.rf_cents[:, 0])
+                dim_pos[i] = np.linspace(cents_u[cent_ind],
+                                         cents_u[-cent_ind - 1],
+                                         discretization_steps)
         x = np.array(list(it.product(*dim_pos)))
         y = self.stim_resp(x, add_noise=False)
         return x, y
